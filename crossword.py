@@ -6,27 +6,25 @@ import urllib.request
 import json
 import requests
 import random
-# from PIL import Image, ImageDraw #, ImageFont
+import sys
+from PIL import Image
 
 print("finished imports")
 
-# codec error when trying to save emojis as an image, possibly because the default font doesn't support emojis
-# text = u"\u2b1b" # black large square
-# # text = unicode(text, errors='ignore')
-# # print(text)
-# print(text)
-# text.encode('utf-8')
-# print(text)
-# text.encode('ascii','replace')
-# print(text)
-# image = Image.new("RGBA", (100,100), (255,255,255))
-# # font = ImageFont.truetype("Symbola.ttf", 60, encoding='unic')
-# draw = ImageDraw.Draw(image)
-# draw.text((0,0), text, (0,0,0))
-# image.save("Test.png")
+bossiber = Image.open('bossiber.jpg')
+bossiber_square = bossiber.crop((0, 0, 481, 481))
+bossiber_square = bossiber_square.resize((6465, 6465))
 
-# Emojis
-# blackSquare = client.get_emoji(648625053344464945)
+cell_image = Image.open('trans_square.png')
+cell_image = cell_image.convert("RGBA")
+# cell_image = cell_image.crop((0,0,431,431))
+
+black_cell = Image.open('black_square.png')
+black_cell = black_cell.convert("RGBA")
+black_cell = black_cell.resize((431, 431))
+# black_cell = black_cell.crop((0,0,431,431))
+
+width, height = cell_image.size
 
 class Crossword(commands.Cog):
     '''nytimes crosswords + discord + h*ntai = fun'''
@@ -87,31 +85,50 @@ class Crossword(commands.Cog):
         output = "" # string of unicode characters representing emojis -> emb description
         with open("currentGrid.json") as f:
             xwordData = json.load(f)
+
+        crossword_image = Image.new('RGBA', (15 * width, 15 * height))
+        x_offset = 0
+        y_offset = 0
+
         for char in xwordData["grid"]:
             # new row after every 15 emojis
-            if column % 15 == 0:
+            if column % 15 == 0 and column != 0:
                 # remove space from last emoji unicode and add \n
-                output = output[:-1] + '\n'
+                # output = output[:-1] + '\n'
+                y_offset += height
+                x_offset = 0
             column += 1
 
             if char == '.':
-                output += "██"
+                # output += "██"
                 # output += "\u2b1b "  => black square emoji
+                print('. received, this should be a black square gdmt')
+                crossword_image.paste(black_cell, (x_offset, y_offset))
+                x_offset += width
             elif char == '*':
                 output += "\u2b1c "  # white square emoji
+                crossword_image.paste(cell_image, (x_offset, y_offset))
+                x_offset += width
             else:
                 # crossword cell contains a letter
-                emojiName = 'regional_indicator_' + char.lower()
-                unicodeStr = emojiData[emojiName]
-                output += unicodeStr + ' '
+                # emojiName = 'regional_indicator_' + char.lower()
+                # unicodeStr = emojiData[emojiName]
+                # output += unicodeStr + ' '
 
+                crossword_image.paste(cell_image, (x_offset, y_offset))
+                x_offset += width
                 # unicodeStr = unicodeStr.encode('utf-16','surrogatepass').decode('utf-16')
                 # asciiStr = ascii(json.loads(r'{unicodeStr}'))
 
+        bossiber_square.paste(crossword_image, (0, 0), crossword_image)
+        bossiber_square.save('crossword_image.png', 'PNG')
+
+        file = discord.File("crossword_image.png")
+        await ctx.channel.send(file=file)
         # print(output)
         # print(len(output)) => emb descriptions have a char limit of 2048 reEEEE
-        emb = discord.Embed(description = output, colour = discord.Color(random.randint(0x000000, 0xFFFFFF)))
-        await ctx.channel.send(embed = emb)
+        # emb = discord.Embed(description = output, colour = discord.Color(random.randint(0x000000, 0xFFFFFF)))
+        # await ctx.channel.send(embed = emb)
 
     @commands.command()
     async def clues(self, ctx, arg):
