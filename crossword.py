@@ -2,11 +2,9 @@ import discord
 from discord.ext.commands import bot
 from discord.ext import commands
 import asyncio
-import urllib.request
 import json
 import requests
 import random
-import sys
 from PIL import Image, ImageFont, ImageDraw
 
 print("Finished imports")
@@ -20,12 +18,12 @@ background_image = background_image.resize((1500, 1500))
 # transparent square = empty cell
 blank_cell = Image.open('trans_square.png')
 blank_cell = blank_cell.convert("RGBA")
-print(blank_cell.size)
+# print(blank_cell.size)
 
 # black square = cell with no letters
 black_cell = Image.open('black_square.png')
 black_cell = black_cell.convert("RGBA")
-print(black_cell.size)
+# print(black_cell.size)
 
 width, height = blank_cell.size
 
@@ -84,7 +82,7 @@ class Crossword(commands.Cog):
         '''makes an image of the current crossword state and sends it in a discord embed'''
 
         # load current state of crossword
-        with open("currentGrid.json") as f:
+        with open("xwordData.json") as f:
             xwordData = json.load(f)
 
         # Image of the entire crossword will be a 15x15 grid of squares
@@ -102,7 +100,7 @@ class Crossword(commands.Cog):
             column += 1
 
             if char == '.':
-                # black cell, move x offset to the right
+                # black cell, move x offset to the right for next cell
                 crossword_image.paste(black_cell, (x_offset, y_offset))
                 x_offset += width
             elif char == '*':
@@ -110,18 +108,18 @@ class Crossword(commands.Cog):
                 crossword_image.paste(blank_cell, (x_offset, y_offset))
                 x_offset += width
             else:
-                # cell with letter, will add letter with imagefont and imagedraw
+                # cell contains letter, add letter to cell with imagefont and imagedraw
                 crossword_image.paste(blank_cell, (x_offset, y_offset))
+                # display text on image
+                draw = ImageDraw.Draw(crossword_image)
+                # font file, font size
+                font = ImageFont.truetype("FRAMD.TTF", 80)
+                # (x, y), "Text content", rgb, font
+                draw.text((x_offset, y_offset), " " + char, (0,0,0), font=font)
                 x_offset += width
 
         # overlays the image with all the cells on top of the background image
         background_image.paste(crossword_image, (0, 0), crossword_image)
-        # display text on image
-        draw = ImageDraw.Draw(background_image)
-        # font file, font size
-        font = ImageFont.truetype("FRAMD.TTF", 100)
-        # (x, y), "Text content", rgb, font
-        draw.text((10, 10), "hello world", (0,0,0), font=font)
         background_image.save('crossword_image.png', 'PNG')
 
         file = discord.File("crossword_image.png")
