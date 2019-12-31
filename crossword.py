@@ -25,6 +25,12 @@ black_cell = Image.open('black_square.png')
 black_cell = black_cell.convert("RGBA")
 # print(black_cell.size)
 
+white_cell = Image.open('white_square.png')
+white_cell = white_cell.convert("RGBA")
+white_cell = white_cell.resize((100,100))
+print(white_cell.size)
+white_cell.save('white_square.png', "PNG")
+
 width, height = blank_cell.size
 
 class Crossword(commands.Cog):
@@ -75,15 +81,18 @@ class Crossword(commands.Cog):
         with open('currentGrid.json', 'w') as json_file:
             json.dump(emptyGrid, json_file)
 
-        # find a way to invoke the crossword method immediately after it is created
+        # display_command = self.bot.get_command("displayCrossword")
+        # await ctx.channel.invoke(display_command)
 
     @commands.command()
-    async def crossword(self, ctx):
+    async def displayCrossword(self, ctx):
         '''makes an image of the current crossword state and sends it in a discord embed'''
 
-        # load current state of crossword
+        # load crossword info, later will be changed to current state
         with open("xwordData.json") as f:
             xwordData = json.load(f)
+            listChars = xwordData["grid"]
+            gridNums = xwordData["gridnums"]
 
         # Image of the entire crossword will be a 15x15 grid of squares
         crossword_image = Image.new('RGBA', (15 * width, 15 * height))
@@ -91,7 +100,8 @@ class Crossword(commands.Cog):
         y_offset = 0
         column = 0
 
-        for char in xwordData["grid"]:
+        for i in range(len(listChars)):
+            char = listChars[i]
             # new row after every 15 cells
             if column % 15 == 0 and column != 0:
                 # moves down a row and resets x offset to the very left
@@ -105,40 +115,69 @@ class Crossword(commands.Cog):
                 x_offset += width
             elif char == '*':
                 # blank cell
-                crossword_image.paste(blank_cell, (x_offset, y_offset))
+                # crossword_image.paste(blank_cell, (x_offset, y_offset))
+                crossword_image.paste(white_cell, (x_offset, y_offset))
                 x_offset += width
             else:
                 # cell contains letter, add letter to cell with imagefont and imagedraw
-                crossword_image.paste(blank_cell, (x_offset, y_offset))
+                # crossword_image.paste(blank_cell, (x_offset, y_offset))
+                crossword_image.paste(white_cell, (x_offset, y_offset))
                 # display text on image
                 draw = ImageDraw.Draw(crossword_image)
                 # font file, font size
                 font = ImageFont.truetype("FRAMD.TTF", 80)
                 # (x, y), "Text content", rgb, font
                 draw.text((x_offset, y_offset), " " + char, (0,0,0), font=font)
+
+                if gridNums[i] != 0:
+                    font = ImageFont.truetype("FRAMD.TTF", 30)
+                    draw.text((x_offset, y_offset), str(gridNums[i]), (0,0,0), font=font)
+
                 x_offset += width
 
         # overlays the image with all the cells on top of the background image
-        background_image.paste(crossword_image, (0, 0), crossword_image)
-        background_image.save('crossword_image.png', 'PNG')
+        # background_image.paste(crossword_image, (0, 0), crossword_image)
+        # background_image.save('crossword_image.png', 'PNG')
+        crossword_image.save('crossword_image.png', 'PNG')
 
         file = discord.File("crossword_image.png")
         await ctx.channel.send(file=file)
 
     @commands.command()
-    async def clues(self, ctx, arg):
+    async def clues(self, ctx, direction):
         '''display clues, user specifies whether to get across to down clues'''
 
         output = ""
         # crossword data from api
         with open('xwordData.json', 'r') as f:
             xwordData = json.load(f)
-        acrossClues = xwordData["clues"][arg.lower()]
+        directionClues = xwordData["clues"][direction.lower()]
 
-        for clue in acrossClues:
+        for clue in directionClues:
             output += clue + '\n'
         emb = discord.Embed(description = output, colour = discord.Color(random.randint(0x000000, 0xFFFFFF)))
         await ctx.channel.send(embed = emb)
+    
+    @commands.command()
+    async def solve(self, ctx, number, direction, guess):
+        '''fills in crossword if user guess matches the crossword solution'''
+
+        with open("xwordData.json") as f:
+            xwordData = json.load(f)
+            listChars = xwordData["grid"]
+            gridNums = xwordData["gridnums"]
+
+        hasAcross = False
+        hasDown = False
+        number = int(number)
+
+        if number in gridNums and number != 0:
+            charAbove = listChars[gridNums.index(number) - 15]
+            if gridNums.index(number) < 15 or charAbove == '.':
+                hasDown = True
+            charLeft = listChars[gridNums.index(number) - 1]
+            if gridNums.index(number) % 15 == 0 or charLeft == '.':
+                hasAcross = True
 
 def setup(bot):
     bot.add_cog(Crossword(bot))
@@ -146,3 +185,4 @@ def setup(bot):
 # TO DO:
 # command for getting individual clues
 # command for solving row or column of puzzle
+# implement a difficulty feature to get easy, medium, hard crosswords by using DoW info
