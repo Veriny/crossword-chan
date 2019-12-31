@@ -28,7 +28,7 @@ black_cell = black_cell.convert("RGBA")
 white_cell = Image.open('white_square.png')
 white_cell = white_cell.convert("RGBA")
 white_cell = white_cell.resize((100,100))
-print(white_cell.size)
+# print(white_cell.size)
 white_cell.save('white_square.png', "PNG")
 
 width, height = blank_cell.size
@@ -38,6 +38,71 @@ class Crossword(commands.Cog):
 
     def __init__(self, bot):
         self.bot = bot
+
+    async def crossword(self):
+        '''makes an image of the current crossword state and sends it in a discord embed'''
+
+        # load crossword info, later will be changed to current state
+        # with open("xwordData.json") as f:
+        with open("currentGrid.json") as f:
+            xwordData = json.load(f)
+            listChars = xwordData["grid"]
+            gridNums = xwordData["gridnums"]
+
+        # Image of the entire crossword will be a 15x15 grid of squares
+        crossword_image = Image.new('RGBA', (15 * width, 15 * height))
+        x_offset = 0
+        y_offset = 0
+        column = 0
+
+        for i in range(len(listChars)):
+            char = listChars[i]
+            # new row after every 15 cells
+            if column % 15 == 0 and column != 0:
+                # moves down a row and resets x offset to the very left
+                y_offset += height
+                x_offset = 0
+            column += 1
+
+            if char == '.':
+                # black cell, move x offset to the right for next cell
+                crossword_image.paste(black_cell, (x_offset, y_offset))
+                x_offset += width
+            elif char == '*':
+                # blank cell
+                # crossword_image.paste(blank_cell, (x_offset, y_offset))
+                crossword_image.paste(white_cell, (x_offset, y_offset))
+        
+                if gridNums[i] != 0:
+                    draw = ImageDraw.Draw(crossword_image)
+                    font = ImageFont.truetype("FRAMD.TTF", 30)
+                    draw.text((x_offset, y_offset), str(gridNums[i]), (0,0,0), font=font)
+
+                x_offset += width
+            else:
+                # cell contains letter, add letter to cell with imagefont and imagedraw
+                # crossword_image.paste(blank_cell, (x_offset, y_offset))
+                crossword_image.paste(white_cell, (x_offset, y_offset))
+                # display text on image
+                draw = ImageDraw.Draw(crossword_image)
+                # font file, font size
+                font = ImageFont.truetype("FRAMD.TTF", 80)
+                # (x, y), "Text content", rgb, font
+                draw.text((x_offset, y_offset), " " + char, (0,0,0), font=font)
+
+                if gridNums[i] != 0:
+                    font = ImageFont.truetype("FRAMD.TTF", 30)
+                    draw.text((x_offset, y_offset), str(gridNums[i]), (0,0,0), font=font)
+
+                x_offset += width
+
+        # overlays the image with all the cells on top of the background image
+        # background_image.paste(crossword_image, (0, 0), crossword_image)
+        # background_image.save('crossword_image.png', 'PNG')
+        crossword_image.save('crossword_image.png', 'PNG')
+
+        # file = discord.File("crossword_image.png")
+        # await ctx.channel.send(file=file)
 
     @commands.command()
     async def new(self, ctx):
@@ -72,74 +137,17 @@ class Crossword(commands.Cog):
 
         # create a list for the empty crossword
         blankGrid = xwordData["grid"]
+        gridNums = xwordData["gridnums"]
         for i in range(0, len(blankGrid)):
             # replace all letters with "*" - represents a blank space
             if blankGrid[i].isalpha():
                 blankGrid[i] = "*"
-        emptyGrid = {"grid": blankGrid}
+        emptyGrid = {"grid": blankGrid, "gridnums": gridNums}
         # save the empty grid, will be updated as people fill it in
         with open('currentGrid.json', 'w') as json_file:
             json.dump(emptyGrid, json_file)
 
-        # display_command = self.bot.get_command("displayCrossword")
-        # await ctx.channel.invoke(display_command)
-
-    @commands.command()
-    async def displayCrossword(self, ctx):
-        '''makes an image of the current crossword state and sends it in a discord embed'''
-
-        # load crossword info, later will be changed to current state
-        with open("xwordData.json") as f:
-            xwordData = json.load(f)
-            listChars = xwordData["grid"]
-            gridNums = xwordData["gridnums"]
-
-        # Image of the entire crossword will be a 15x15 grid of squares
-        crossword_image = Image.new('RGBA', (15 * width, 15 * height))
-        x_offset = 0
-        y_offset = 0
-        column = 0
-
-        for i in range(len(listChars)):
-            char = listChars[i]
-            # new row after every 15 cells
-            if column % 15 == 0 and column != 0:
-                # moves down a row and resets x offset to the very left
-                y_offset += height
-                x_offset = 0
-            column += 1
-
-            if char == '.':
-                # black cell, move x offset to the right for next cell
-                crossword_image.paste(black_cell, (x_offset, y_offset))
-                x_offset += width
-            elif char == '*':
-                # blank cell
-                # crossword_image.paste(blank_cell, (x_offset, y_offset))
-                crossword_image.paste(white_cell, (x_offset, y_offset))
-                x_offset += width
-            else:
-                # cell contains letter, add letter to cell with imagefont and imagedraw
-                # crossword_image.paste(blank_cell, (x_offset, y_offset))
-                crossword_image.paste(white_cell, (x_offset, y_offset))
-                # display text on image
-                draw = ImageDraw.Draw(crossword_image)
-                # font file, font size
-                font = ImageFont.truetype("FRAMD.TTF", 80)
-                # (x, y), "Text content", rgb, font
-                draw.text((x_offset, y_offset), " " + char, (0,0,0), font=font)
-
-                if gridNums[i] != 0:
-                    font = ImageFont.truetype("FRAMD.TTF", 30)
-                    draw.text((x_offset, y_offset), str(gridNums[i]), (0,0,0), font=font)
-
-                x_offset += width
-
-        # overlays the image with all the cells on top of the background image
-        # background_image.paste(crossword_image, (0, 0), crossword_image)
-        # background_image.save('crossword_image.png', 'PNG')
-        crossword_image.save('crossword_image.png', 'PNG')
-
+        await self.crossword()
         file = discord.File("crossword_image.png")
         await ctx.channel.send(file=file)
 
@@ -170,6 +178,7 @@ class Crossword(commands.Cog):
         with open("currentGrid.json") as f:
             currentGrid = json.load(f)
             currentStateChars = currentGrid["grid"]
+            currentGridNums = currentGrid["gridnums"]
 
         hasAcross = False
         hasDown = False
@@ -183,12 +192,12 @@ class Crossword(commands.Cog):
             # the number has a down word if it's in the first row or if the cell above it is black
             if gridNums.index(number) < 15 or charAbove == '.':
                 hasDown = True
-                print(str(number) + ' down exists')
+                # print(str(number) + ' down exists')
             # the number has an across word if it's in the first column or if the cell to the left is black
             charLeft = listChars[gridNums.index(number) - 1]
             if gridNums.index(number) % 15 == 0 or charLeft == '.':
                 hasAcross = True
-                print(str(number) + ' across exists')
+                # print(str(number) + ' across exists')
 
         # get the word and compare it to the guess, if the guess is correct update the current state of the crossword
         if (direction == 'across' and hasAcross == True) or (direction == 'down' and hasDown == True):
@@ -221,7 +230,7 @@ class Crossword(commands.Cog):
             
             # guess is correct, update current state of the crossword
             if (actualWord == guess):
-                await ctx.channel.send('you guessed correctly')
+                await ctx.channel.send('Your guess is correct!')
                 # update current state of the crossword
                 gridIndex = gridNums.index(number)
                 if direction == 'across':
@@ -234,12 +243,16 @@ class Crossword(commands.Cog):
                         gridIndex += 15
 
                 with open('currentGrid.json', 'w') as json_file:
-                    data = {"grid": currentStateChars}
+                    data = {"grid": currentStateChars, "gridnums": currentGridNums}
                     json.dump(data, json_file)
+
+                await self.crossword()
+                file = discord.File("crossword_image.png")
+                await ctx.channel.send(file=file)
 
             else:
                 if (len(actualWord.lower()) != len(guess)):
-                    await ctx.channel.send('Your guess is the wrong length')
+                    await ctx.channel.send('Your guess is the wrong length, you fucking idiot sandwich')
                 else:
                     await ctx.channel.send('Your guess is incorrect')
 
