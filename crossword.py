@@ -167,22 +167,88 @@ class Crossword(commands.Cog):
             listChars = xwordData["grid"]
             gridNums = xwordData["gridnums"]
 
+        with open("currentGrid.json") as f:
+            currentGrid = json.load(f)
+            currentStateChars = currentGrid["grid"]
+
         hasAcross = False
         hasDown = False
         number = int(number)
+        direction = direction.lower()
+        guess = guess.upper()
 
+        # check if the number direction combination is valid
         if number in gridNums and number != 0:
             charAbove = listChars[gridNums.index(number) - 15]
+            # the number has a down word if it's in the first row or if the cell above it is black
             if gridNums.index(number) < 15 or charAbove == '.':
                 hasDown = True
+                print(str(number) + ' down exists')
+            # the number has an across word if it's in the first column or if the cell to the left is black
             charLeft = listChars[gridNums.index(number) - 1]
             if gridNums.index(number) % 15 == 0 or charLeft == '.':
                 hasAcross = True
+                print(str(number) + ' across exists')
+
+        # get the word and compare it to the guess, if the guess is correct update the current state of the crossword
+        if (direction == 'across' and hasAcross == True) or (direction == 'down' and hasDown == True):
+            actualWord = ''
+            if direction == 'across':
+                # keep adding letters to actualWord until you run into a black cell or the next row
+                currentCellNum = gridNums.index(number)
+                currentCellChar = listChars[currentCellNum]
+                # while (current cell is not black) or (not in first column and not the start of the word)
+                while (currentCellChar != '.') or (currentCellNum % 15 == 0 and currentCellNum != gridNums.index(number)):
+                    # print(currentCellChar)
+                    actualWord += currentCellChar
+                    currentCellNum += 1
+                    currentCellChar = listChars[currentCellNum]
+
+            if direction == 'down':
+                # keep adding letters to actualWord until you run into a black cell or the next row
+                currentCellNum = gridNums.index(number)
+                currentCellChar = listChars[currentCellNum]
+                # while (current cell is not black) or (not in first row and not the start of the word)
+                while (currentCellChar != '.') or (currentCellNum < 15 and currentCellNum != gridNums.index(number)):
+                    # print(currentCellChar)
+                    actualWord += currentCellChar
+                    # move down a row
+                    currentCellNum += 15
+                    currentCellChar = listChars[currentCellNum]
+
+            # print(actualWord)
+            # print(guess)
+            
+            # guess is correct, update current state of the crossword
+            if (actualWord == guess):
+                await ctx.channel.send('you guessed correctly')
+                # update current state of the crossword
+                gridIndex = gridNums.index(number)
+                if direction == 'across':
+                    for char in actualWord:
+                        currentStateChars[gridIndex] = char
+                        gridIndex += 1
+                if direction == 'down':
+                    for char in actualWord:
+                        currentStateChars[gridIndex] = char
+                        gridIndex += 15
+
+                with open('currentGrid.json', 'w') as json_file:
+                    data = {"grid": currentStateChars}
+                    json.dump(data, json_file)
+
+            else:
+                if (len(actualWord.lower()) != len(guess)):
+                    await ctx.channel.send('Your guess is the wrong length')
+                else:
+                    await ctx.channel.send('Your guess is incorrect')
 
 def setup(bot):
     bot.add_cog(Crossword(bot))
 
 # TO DO:
 # command for getting individual clues
-# command for solving row or column of puzzle
 # implement a difficulty feature to get easy, medium, hard crosswords by using DoW info
+# add emotes to messages so users can easily choose a command, saves space
+# define command to get definition of an obscure word
+# instead of generating an image of the crossword every time maybe just update whatever changed
