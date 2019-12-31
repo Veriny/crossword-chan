@@ -39,7 +39,7 @@ class Crossword(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
-    async def crossword(self):
+    async def displayCrossword(self):
         '''makes an image of the current crossword state and sends it in a discord embed'''
 
         # load crossword info, later will be changed to current state
@@ -105,6 +105,12 @@ class Crossword(commands.Cog):
         # await ctx.channel.send(file=file)
 
     @commands.command()
+    async def crossword(self, ctx):
+        await self.displayCrossword()
+        file = discord.File("crossword_image.png")
+        await ctx.channel.send(file=file)
+
+    @commands.command()
     async def new(self, ctx):
         '''Gets data of a random nytimes crossword from the github repository: https://github.com/doshea/nyt_crosswords'''
 
@@ -147,7 +153,7 @@ class Crossword(commands.Cog):
         with open('currentGrid.json', 'w') as json_file:
             json.dump(emptyGrid, json_file)
 
-        await self.crossword()
+        await self.displayCrossword()
         file = discord.File("crossword_image.png")
         await ctx.channel.send(file=file)
 
@@ -246,7 +252,7 @@ class Crossword(commands.Cog):
                     data = {"grid": currentStateChars, "gridnums": currentGridNums}
                     json.dump(data, json_file)
 
-                await self.crossword()
+                await self.displayCrossword()
                 file = discord.File("crossword_image.png")
                 await ctx.channel.send(file=file)
 
@@ -260,7 +266,7 @@ def setup(bot):
     bot.add_cog(Crossword(bot))
 
 # TO DO:
-# command for getting individual clues
+# change the clues command so users can get individual clues
 # implement a difficulty feature to get easy, medium, hard crosswords by using DoW info
 # add emotes to messages so users can easily choose a command, saves space
 # define command to get definition of an obscure word
