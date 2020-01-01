@@ -41,7 +41,7 @@ class Crossword(commands.Cog):
         self.bot = bot
 
     async def displayCrossword(self):
-        '''makes an image of the current crossword state and sends it in a discord embed'''
+        '''Constructs and saves an image of the current crossword state'''
 
         # load crossword info, later will be changed to current state
         # with open("xwordData.json") as f:
@@ -292,7 +292,7 @@ class Crossword(commands.Cog):
                     await ctx.channel.send('Your guess is incorrect')
 
     @commands.command()
-    async def search(self, ctx, *args):
+    async def lookup(self, ctx, *args):
         '''searches for a word/expression/person/event/whatever in wikipedia and sends the summary in a discord embed'''
 
         # ex user input +search harder daddy -> harder_daddy
@@ -311,6 +311,6 @@ def setup(bot):
     bot.add_cog(Crossword(bot))
 
 # TO DO:
-# implement a difficulty feature to get easy, medium, hard crosswords by using DoW info
 # add emotes to messages so users can easily choose a command, saves space
 # instead of generating an image of the crossword every time maybe just update whatever changed
+# anime background images

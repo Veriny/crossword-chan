@@ -8,7 +8,7 @@ from discord.ext import commands
 API_TOKEN = "&api_key=6edceb08a4ab5c6c6d4fb8d65f7db50dec2ffcf6acbb4905d40751bed9cb0660&user_id=500094"
 tags = ""
 
-class Htest(commands.Cog):
+class Animeges(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
     async def getH(self, ctx):
@@ -47,4 +47,4 @@ class Htest(commands.Cog):
         await ctx.channel.send("https://safebooru.org//images/{}/".format(post['directory']) + post['image'])
 
 def setup(Bot):
-    Bot.add_cog(Htest(Bot))
+    Bot.add_cog(Animeges(Bot))
