@@ -10,7 +10,7 @@ file.close()
 # print(BOT_TOKEN)
 bot = commands.Bot(command_prefix = "+")
 
-extensions = ['crossword', 'animeges']
+extensions = ['crossword']
 
 @bot.event
 async def on_ready():

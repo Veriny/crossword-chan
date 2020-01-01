@@ -15,16 +15,10 @@ class Crossword(commands.Cog):
 
     def __init__(self, bot):
         self.bot = bot
-        self.backgroundImg = False
+        self.backgroundImg = True
 
     async def displayCrossword(self):
         '''Constructs and saves an image of the current crossword state'''
-
-        # background image, JAPANESE CARTOON IMAGES HERE
-        # background_image = Image.open('bossiber.jpg')
-        # crop to make the background image a square
-        # background_image = background_image.crop((0, 0, 481, 481))
-        # background_image = background_image.resize((1500, 1500))
 
         # transparent empty cell
         blank_cell = Image.open('trans_square.png')
@@ -66,41 +60,78 @@ class Crossword(commands.Cog):
                 # black cell, move x offset to the right for next cell
                 crossword_image.paste(black_cell, (x_offset, y_offset))
                 x_offset += width
-            elif char == '*':
-                # blank cell
-                # crossword_image.paste(blank_cell, (x_offset, y_offset))
-                crossword_image.paste(white_cell, (x_offset, y_offset))
+            else:
+                # cell is either a blank cell or a cell with a letter
+                if self.backgroundImg:
+                    # transparent cell
+                    crossword_image.paste(blank_cell, (x_offset, y_offset))
+                else:
+                    crossword_image.paste(white_cell, (x_offset, y_offset))
 
                 if gridNums[i] != 0:
                     draw = ImageDraw.Draw(crossword_image)
                     font = ImageFont.truetype("FRAMD.TTF", 30)
                     draw.text((x_offset, y_offset), str(gridNums[i]), (0,0,0), font=font)
+                
+                # cell contains letter
+                if char.isalpha():
+                    # add letter to cell with imagefont and imagedraw
+                    draw = ImageDraw.Draw(crossword_image)
+                    # font file, font size
+                    font = ImageFont.truetype("FRAMD.TTF", 80)
+                    # (x, y), "Text content", rgb, font
+                    draw.text((x_offset, y_offset), " " + char, (0,0,0), font=font)
 
                 x_offset += width
+
+        if self.backgroundImg:
+            # generate anime image
+            await self.img()
+            background_img = Image.open('anime_image.png')
+            background_img = background_img.convert("RGBA")
+            # half alpha
+            background_img.putalpha(200)
+            # crop to make the background image a square
+            background_width = background_img.size[0]
+            background_height = background_img.size[1]
+            # make the image a square
+            if background_width > background_height:
+                # crop right side (left, top, right, bottom)
+                background_img = background_img.crop((0, 0, background_height, background_height))
             else:
-                # cell contains letter, add letter to cell with imagefont and imagedraw
-                # crossword_image.paste(blank_cell, (x_offset, y_offset))
-                crossword_image.paste(white_cell, (x_offset, y_offset))
-                # display text on image
-                draw = ImageDraw.Draw(crossword_image)
-                # font file, font size
-                font = ImageFont.truetype("FRAMD.TTF", 80)
-                # (x, y), "Text content", rgb, font
-                draw.text((x_offset, y_offset), " " + char, (0,0,0), font=font)
+                if background_width < background_height:
+                    # crop bottom
+                    background_img = background_img.crop((0, 0, background_width, background_width))
+            # set to the same size as the crossword
+            background_img = background_img.resize((1500, 1500))
+            
+            # overlay the image with all the cells on top of the background image
+            background_img.paste(crossword_image, (0, 0), crossword_image)
+            background_img.save('crossword_image.png', 'PNG')
+        else:
+            crossword_image.save('crossword_image.png', 'PNG')
 
-                if gridNums[i] != 0:
-                    font = ImageFont.truetype("FRAMD.TTF", 30)
-                    draw.text((x_offset, y_offset), str(gridNums[i]), (0,0,0), font=font)
+    async def img(self, tag=None):
+        API_TOKEN = "&api_key=6edceb08a4ab5c6c6d4fb8d65f7db50dec2ffcf6acbb4905d40751bed9cb0660&user_id=500094"
 
-                x_offset += width
+        if tag == None:
+            url = "https://safebooru.org/index.php?page=dapi&s=post&q=index"  + API_TOKEN + "&json=1"
+        else:
+            url = "https://safebooru.org/index.php?page=dapi&s=post&q=index" + "&tags={}".format(tag) + API_TOKEN + "&json=1"
+        r = requests.get(url=url)
+        with open('r.json', 'w') as json_file:
+            json.dump(r.json(), json_file)
+        data = r.json()
+        post = data[random.randint(1,99)]
 
-        # overlays the image with all the cells on top of the background image
-        # background_image.paste(crossword_image, (0, 0), crossword_image)
-        # background_image.save('crossword_image.png', 'PNG')
-        crossword_image.save('crossword_image.png', 'PNG')
-
-        # file = discord.File("crossword_image.png")
-        # await ctx.channel.send(file=file)
+        if tag == None:
+            image_url = "https://safebooru.org//images/2859/" + post['image']
+            with open('anime_image.png', 'wb') as f:
+                f.write(requests.get(image_url).content)
+        else:
+            image_url = "https://safebooru.org//images/{}/".format(post['directory']) + post['image']
+            with open('anime_image.png', 'wb') as f:
+                f.write(requests.get(image_url).content)
 
     @commands.command()
     async def crossword(self, ctx):
