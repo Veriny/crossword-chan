@@ -11,6 +11,7 @@ tags = ""
 class Animeges(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
+
     async def getH(self, ctx):
         url = "https://safebooru.org/index.php?page=dapi&s=post&q=index&json=1"
         r = requests.get(url=url)
@@ -18,9 +19,6 @@ class Animeges(commands.Cog):
             json.dump(r.json(), json_file)
         await ctx.channel.send("Accessed API with status code" + str(r.status_code))
         print(r.json()[1])
-
-
-
 
     @commands.command()
     async def test(self, ctx):

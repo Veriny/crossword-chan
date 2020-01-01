@@ -10,38 +10,35 @@ import wikipediaapi
 
 print("Finished imports")
 
-# background image, JAPANESE CARTOON IMAGES HERE
-background_image = Image.open('bossiber.jpg')
-# crop to make the background image a square
-# background_image = background_image.crop((0, 0, 481, 481))
-background_image = background_image.resize((1500, 1500))
-
-# transparent square = empty cell
-blank_cell = Image.open('trans_square.png')
-blank_cell = blank_cell.convert("RGBA")
-# print(blank_cell.size)
-
-# black square = cell with no letters
-black_cell = Image.open('black_square.png')
-black_cell = black_cell.convert("RGBA")
-# print(black_cell.size)
-
-white_cell = Image.open('white_square.png')
-white_cell = white_cell.convert("RGBA")
-white_cell = white_cell.resize((100,100))
-# print(white_cell.size)
-white_cell.save('white_square.png', "PNG")
-
-width, height = blank_cell.size
-
 class Crossword(commands.Cog):
     '''nytimes crosswords + discord + japanese cartoon images = fun'''
 
     def __init__(self, bot):
         self.bot = bot
+        self.backgroundImg = False
 
     async def displayCrossword(self):
         '''Constructs and saves an image of the current crossword state'''
+
+        # background image, JAPANESE CARTOON IMAGES HERE
+        # background_image = Image.open('bossiber.jpg')
+        # crop to make the background image a square
+        # background_image = background_image.crop((0, 0, 481, 481))
+        # background_image = background_image.resize((1500, 1500))
+
+        # transparent empty cell
+        blank_cell = Image.open('trans_square.png')
+        blank_cell = blank_cell.convert("RGBA")
+
+        # black cell without letters
+        black_cell = Image.open('black_square.png')
+        black_cell = black_cell.convert("RGBA")
+
+        # white empty cell
+        white_cell = Image.open('white_square.png')
+        white_cell = white_cell.convert("RGBA")
+
+        width, height = blank_cell.size
 
         # load crossword info, later will be changed to current state
         # with open("xwordData.json") as f:
@@ -107,14 +104,15 @@ class Crossword(commands.Cog):
 
     @commands.command()
     async def crossword(self, ctx):
-        '''displays the crossword in discord'''
+        '''Displays the crossword'''
         await self.displayCrossword()
         file = discord.File("crossword_image.png")
         await ctx.channel.send(file=file)
 
     @commands.command()
     async def new(self, ctx, difficulty=None):
-        '''Generates a random NYTimes Crossword and displays it as an unfilled crossword'''
+        '''Generates a random NYTimes Crossword and displays it as an unfilled crossword
+        Optional parameter: difficulty (easy, medium, hard)'''
 
         # Gets data of a random nytimes crossword from the github repository: https://github.com/doshea/nyt_crosswords
 
@@ -170,8 +168,9 @@ class Crossword(commands.Cog):
         await ctx.channel.send(file=file)
 
     @commands.command()
-    async def clueList(self, ctx, direction):
-        '''display clues, user specifies whether to get across to down clues'''
+    async def cluelist(self, ctx, direction):
+        '''Display all the clues in a certain direction
+        Required parameter: direction (across, down)'''
 
         output = ""
         # crossword data from api
@@ -186,6 +185,8 @@ class Crossword(commands.Cog):
 
     @commands.command()
     async def clue(self, ctx, direction, number):
+        '''Gets a specific clue
+        Required parameters: direction (across, down) and valid number (see crossword image)'''
         ans = ""
         found = False
         with open('xwordData.json', 'r') as f:
@@ -203,7 +204,8 @@ class Crossword(commands.Cog):
 
     @commands.command()
     async def solve(self, ctx, number, direction, guess):
-        '''fills in crossword if user guess matches the crossword solution'''
+        '''Fills in crossword if user guess matches the crossword solution
+        Required parameters: number (see crossword), direction (across, down), guess (user guess)'''
 
         with open("xwordData.json") as f:
             xwordData = json.load(f)
@@ -293,7 +295,7 @@ class Crossword(commands.Cog):
 
     @commands.command()
     async def lookup(self, ctx, *args):
-        '''searches for a word/expression/person/event/whatever in wikipedia and sends the summary in a discord embed'''
+        '''Searches for a word/expression/person/event/whatever in wikipedia and returns the summary'''
 
         # ex user input +search harder daddy -> harder_daddy
         searchStr = ''

@@ -7,10 +7,10 @@ token_file = os.path.join(desktop, "token.txt")
 file = open(token_file, 'r')
 BOT_TOKEN = file.readline()
 file.close()
-print(BOT_TOKEN)
+# print(BOT_TOKEN)
 bot = commands.Bot(command_prefix = "+")
 
-extensions = ['crossword', 'anime_images']
+extensions = ['crossword', 'animeges']
 
 @bot.event
 async def on_ready():
