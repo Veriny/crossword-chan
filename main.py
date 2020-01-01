@@ -2,11 +2,11 @@ import discord
 from discord.ext import commands
 import os
 
-desktop = os.path.join(os.environ['USERPROFILE'], "Desktop")
-token_file = os.path.join(desktop, "token.txt")
-file = open(token_file, 'r')
-BOT_TOKEN = file.readline()
-file.close()
+# desktop = os.path.join(os.environ['USERPROFILE'], "Desktop")
+# token_file = os.path.join(desktop, "token.txt")
+# file = open(token_file, 'r')
+# BOT_TOKEN = file.readline()
+# file.close()
 # print(BOT_TOKEN)
 bot = commands.Bot(command_prefix = "+")
 
@@ -36,4 +36,4 @@ async def reload(ctx, cogname):
 for ext in extensions:
     bot.load_extension(ext)
 
-bot.run(BOT_TOKEN)
+bot.run("NjIyMTMwMzY4Mzc5ODc5NDI1.Xgv73g.v4IEGvNZF2BLm3ToIHP_AFoUJaI")
