@@ -340,10 +340,15 @@ class Crossword(commands.Cog):
 
         await ctx.channel.send(pageSummary)
 
+    @commands.command()
+    async def background(self, ctx):
+        '''Turns the anime backgrounds on or off'''
+        self.backgroundImg = not self.backgroundImg
+
 def setup(bot):
     bot.add_cog(Crossword(bot))
 
 # TO DO:
 # add emotes to messages so users can easily choose a command, saves space
 # instead of generating an image of the crossword every time maybe just update whatever changed
-# anime background images
+# command to request specific tags for anime backgrounds
