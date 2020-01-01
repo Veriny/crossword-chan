@@ -280,6 +280,11 @@ class Crossword(commands.Cog):
                 else:
                     await ctx.channel.send('Your guess is incorrect')
 
+    @commands.command()
+    async def search(self, ctx, *args):
+        # search word/expression/person/event/whatever in wikipedia
+        # return blurb / description / first paragraph
+
 def setup(bot):
     bot.add_cog(Crossword(bot))
 
@@ -287,5 +292,5 @@ def setup(bot):
 # change the clues command so users can get individual clues
 # implement a difficulty feature to get easy, medium, hard crosswords by using DoW info
 # add emotes to messages so users can easily choose a command, saves space
-# define command to get definition of an obscure word
+# define command to get definition of a word or expression / info about person or event - wikipedia api
 # instead of generating an image of the crossword every time maybe just update whatever changed
