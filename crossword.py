@@ -72,7 +72,7 @@ class Crossword(commands.Cog):
                 # blank cell
                 # crossword_image.paste(blank_cell, (x_offset, y_offset))
                 crossword_image.paste(white_cell, (x_offset, y_offset))
-        
+
                 if gridNums[i] != 0:
                     draw = ImageDraw.Draw(crossword_image)
                     font = ImageFont.truetype("FRAMD.TTF", 30)
@@ -119,7 +119,7 @@ class Crossword(commands.Cog):
                 day = "0" + day
 
             # example url: https://raw.githubusercontent.com/doshea/nyt_crosswords/master/2010/06/15.json
-            
+
             xwordURL = "https://raw.githubusercontent.com/doshea/nyt_crosswords/master/" + year + "/" + month + "/" + day + ".json"
 
             try:
@@ -152,7 +152,7 @@ class Crossword(commands.Cog):
         await ctx.channel.send(file=file)
 
     @commands.command()
-    async def clues(self, ctx, direction):
+    async def clueList(self, ctx, direction):
         '''display clues, user specifies whether to get across to down clues'''
 
         output = ""
@@ -165,7 +165,25 @@ class Crossword(commands.Cog):
             output += clue + '\n'
         emb = discord.Embed(description = output, colour = discord.Color(random.randint(0x000000, 0xFFFFFF)))
         await ctx.channel.send(embed = emb)
-    
+
+    @commands.command()
+    async def clue(self, ctx, direction, number):
+        ans = ""
+        found = False
+        with open('xwordData.json', 'r') as f:
+            data = json.load(f)
+        clues = data["clues"][direction.lower()]
+        number = number + "."
+        for clue in clues:
+            if clue.startswith(number):
+                ans = clue
+                found = true
+        if found:
+            await ctx.channel.send(ans)
+        else:
+            await ctx.channel.send("there's nothing like that which exists, you actual human garbage")
+
+
     @commands.command()
     async def solve(self, ctx, number, direction, guess):
         '''fills in crossword if user guess matches the crossword solution'''
@@ -227,7 +245,7 @@ class Crossword(commands.Cog):
 
             # print(actualWord)
             # print(guess)
-            
+
             # guess is correct, update current state of the crossword
             if (actualWord == guess):
                 await ctx.channel.send('Your guess is correct!')
