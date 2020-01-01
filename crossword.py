@@ -284,7 +284,6 @@ def setup(bot):
     bot.add_cog(Crossword(bot))
 
 # TO DO:
-# change the clues command so users can get individual clues
 # implement a difficulty feature to get easy, medium, hard crosswords by using DoW info
 # add emotes to messages so users can easily choose a command, saves space
 # define command to get definition of an obscure word
