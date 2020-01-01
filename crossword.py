@@ -6,6 +6,7 @@ import json
 import requests
 import random
 from PIL import Image, ImageFont, ImageDraw
+import wikipediaapi
 
 print("Finished imports")
 
@@ -183,12 +184,11 @@ class Crossword(commands.Cog):
         for clue in clues:
             if clue.startswith(number):
                 ans = clue
-                found = true
+                found = True
         if found:
             await ctx.channel.send(ans)
         else:
             await ctx.channel.send("there's nothing like that which exists, you actual human garbage")
-
 
     @commands.command()
     async def solve(self, ctx, number, direction, guess):
@@ -282,8 +282,19 @@ class Crossword(commands.Cog):
 
     @commands.command()
     async def search(self, ctx, *args):
-        # search word/expression/person/event/whatever in wikipedia
-        # return blurb / description / first paragraph
+        '''searches for a word/expression/person/event/whatever in wikipedia and sends the summary in a discord embed'''
+
+        # ex user input +search harder daddy -> harder_daddy
+        searchStr = ''
+        for i in range(len(args)):
+            searchStr += args[i] + '_'
+        searchStr = searchStr[:-1]
+
+        wiki = wikipediaapi.Wikipedia('en')
+        page = wiki.page(searchStr)
+        pageSummary = page.summary
+
+        await ctx.channel.send(pageSummary)
 
 def setup(bot):
     bot.add_cog(Crossword(bot))
