@@ -107,13 +107,16 @@ class Crossword(commands.Cog):
 
     @commands.command()
     async def crossword(self, ctx):
+        '''displays the crossword in discord'''
         await self.displayCrossword()
         file = discord.File("crossword_image.png")
         await ctx.channel.send(file=file)
 
     @commands.command()
-    async def new(self, ctx):
-        '''Gets data of a random nytimes crossword from the github repository: https://github.com/doshea/nyt_crosswords'''
+    async def new(self, ctx, difficulty=None):
+        '''Generates a random NYTimes Crossword and displays it as an unfilled crossword'''
+
+        # Gets data of a random nytimes crossword from the github repository: https://github.com/doshea/nyt_crosswords
 
         dataRetrieved = False
         while not dataRetrieved:
@@ -133,7 +136,15 @@ class Crossword(commands.Cog):
                 # send get request and save data in json format
                 r = requests.get(url = xwordURL)
                 xwordData = r.json()
-                dataRetrieved = True
+                if difficulty == None:
+                    dataRetrieved = True
+                else:
+                    difficulty = difficulty.lower()
+                    # date of week, Monday (Easiest) -> Saturday (Hardest)
+                    dow = xwordData["dow"]
+                    if (difficulty == 'easy' and (dow == 'Monday' or dow == 'Tuesday')) or (difficulty == 'medium' and (dow == 'Wednesday' or dow == 'Thursday')) or (difficulty == 'hard' and (dow == 'Friday' or dow == 'Saturday')):
+                        dataRetrieved = True
+
             except ValueError:
                 # some gaps in api coverage
                 print("Failed to get JSON data, making another request")
@@ -302,5 +313,4 @@ def setup(bot):
 # TO DO:
 # implement a difficulty feature to get easy, medium, hard crosswords by using DoW info
 # add emotes to messages so users can easily choose a command, saves space
-# define command to get definition of a word or expression / info about person or event - wikipedia api
 # instead of generating an image of the crossword every time maybe just update whatever changed
