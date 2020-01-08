@@ -15,7 +15,7 @@ class Crossword(commands.Cog):
 
     def __init__(self, bot):
         self.bot = bot
-        self.backgroundImg = True
+        self.backgroundImg = False
 
     async def displayCrossword(self):
         '''Constructs and saves an image of the current crossword state'''
@@ -35,8 +35,7 @@ class Crossword(commands.Cog):
         width, height = blank_cell.size
 
         # load crossword info, later will be changed to current state
-        # with open("xwordData.json") as f:
-        with open("currentGrid.json") as f:
+        with open("xwordData.json") as f:
             xwordData = json.load(f)
             listChars = xwordData["grid"]
             gridNums = xwordData["gridnums"]
@@ -119,8 +118,6 @@ class Crossword(commands.Cog):
         else:
             url = "https://safebooru.org/index.php?page=dapi&s=post&q=index" + "&tags={}".format(tag) + API_TOKEN + "&json=1"
         r = requests.get(url=url)
-        with open('r.json', 'w') as json_file:
-            json.dump(r.json(), json_file)
         data = r.json()
         post = data[random.randint(1,99)]
 
@@ -165,34 +162,45 @@ class Crossword(commands.Cog):
                 # send get request and save data in json format
                 r = requests.get(url = xwordURL)
                 xwordData = r.json()
-                if difficulty == None:
-                    dataRetrieved = True
-                else:
-                    difficulty = difficulty.lower()
-                    # date of week, Monday (Easiest) -> Saturday (Hardest)
-                    dow = xwordData["dow"]
-                    if (difficulty == 'easy' and (dow == 'Monday' or dow == 'Tuesday')) or (difficulty == 'medium' and (dow == 'Wednesday' or dow == 'Thursday')) or (difficulty == 'hard' and (dow == 'Friday' or dow == 'Saturday')):
+                # filter out 21x21 crosswords
+                if xwordData["size"]["cols"] == 15:
+                    if difficulty == None:
                         dataRetrieved = True
+                    else:
+                        difficulty = difficulty.lower()
+                        # date of week, Monday (Easiest) -> Saturday (Hardest)
+                        dow = xwordData["dow"]
+                        if (difficulty == 'easy' and (dow == 'Monday' or dow == 'Tuesday')) or (difficulty == 'medium' and (dow == 'Wednesday' or dow == 'Thursday')) or (difficulty == 'hard' and (dow == 'Friday' or dow == 'Saturday')):
+                            dataRetrieved = True
 
             except ValueError:
                 # some gaps in api coverage
                 print("Failed to get JSON data, making another request")
 
-        # save crossword data as local json file
-        with open('xwordData.json', 'w') as json_file:
-            json.dump(xwordData, json_file)
+        # edit clues by replacing all instances of "_" with "\_" because discord markdown reeee
+        for key in xwordData["clues"]:
+            # key = "across" and "down"
+            for i in range(len(xwordData["clues"][key])):
+                clue = xwordData["clues"][key][i]
+                newClue = ""
+                for char in clue:
+                    if char == "_":
+                        newClue += "\_"
+                    else:
+                        newClue += char
+                xwordData["clues"][key][i] = newClue
 
-        # create a list for the empty crossword
+        # create a list for the empty crossword, will be updated as cells are filled in
         blankGrid = xwordData["grid"]
-        gridNums = xwordData["gridnums"]
         for i in range(0, len(blankGrid)):
             # replace all letters with "*" - represents a blank space
             if blankGrid[i].isalpha():
                 blankGrid[i] = "*"
-        emptyGrid = {"grid": blankGrid, "gridnums": gridNums}
-        # save the empty grid, will be updated as people fill it in
-        with open('currentGrid.json', 'w') as json_file:
-            json.dump(emptyGrid, json_file)
+        xwordData["currentGrid"] = blankGrid
+
+        # save crossword data as local json file
+        with open('xwordData.json', 'w') as json_file:
+            json.dump(xwordData, json_file)
 
         await self.displayCrossword()
         file = discord.File("crossword_image.png")
@@ -240,13 +248,9 @@ class Crossword(commands.Cog):
 
         with open("xwordData.json") as f:
             xwordData = json.load(f)
+            currentGrid = xwordData["currentGrid"]
             listChars = xwordData["grid"]
             gridNums = xwordData["gridnums"]
-
-        with open("currentGrid.json") as f:
-            currentGrid = json.load(f)
-            currentStateChars = currentGrid["grid"]
-            currentGridNums = currentGrid["gridnums"]
 
         hasAcross = False
         hasDown = False
@@ -303,11 +307,11 @@ class Crossword(commands.Cog):
                 gridIndex = gridNums.index(number)
                 if direction == 'across':
                     for char in actualWord:
-                        currentStateChars[gridIndex] = char
+                        currentGrid[gridIndex] = char
                         gridIndex += 1
                 if direction == 'down':
                     for char in actualWord:
-                        currentStateChars[gridIndex] = char
+                        currentGrid[gridIndex] = char
                         gridIndex += 15
 
                 with open('currentGrid.json', 'w') as json_file:

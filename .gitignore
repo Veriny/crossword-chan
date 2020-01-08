@@ -1,6 +1,6 @@
 #.gitignore
 **/__pycache__
 **/crossword_image.png
-**/currentGrid.json
+**/anime_image.png
 **/xwordData.json
-**/bossiber.jpg
+**/sudoku_image.png
